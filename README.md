@@ -1,24 +1,27 @@
 # nimagemagick
 
 nimagemagick is an [ImageMagick](https://www.imagemagick.org/) wrapper for Nim.
-It wraps the MagickCore and MagickWand APIs, though at this point
-it's mostly a "thin" wrapper. With time more functions will be covered
+It wraps the [MagickCore](https://imagemagick.org/script/magick-wand.php) and 
+[MagickWand](https://imagemagick.org/script/magick-wand.php) APIs, though at 
+this point it's mostly a "thin" wrapper. With time more functions will be covered
 by the wrapper for a convenient interface. See the current progress in
-nimagemagick/wand.nim.
+src/nimagemagick.nim.
 
 The wrapper was built using the [nimterop](https://github.com/genotrance/nimterop/)
 package, though [tree-sitter](https://github.com/tree-sitter/tree-sitter) and 
 nimterop still need a few fixes to be able to wrap MagickWand/MagickCore without manual edits. 
-Till then, `magickwand.nim` contains the edited wrapper, and works just fine.
+Till then, `magickwand.nim` contains the edited wrapper.
 
-Requires ImageMagick 7.0 or later.
+Contributions are welcome.
 
-Installation:
+Requires ImageMagick **7.0** or later. Run `convert -version` to check.
+
+### Installation
 ```sh
 nimble install https://github.com/zedeus/nimagemagick.git
 ```
 
-Example usage:
+### Example usage
 ```nim
 import nimagemagick
 
@@ -44,7 +47,7 @@ terminus()
 
 See other examples in the examples folder.
 
-Notes:
+### Notes
 
 To use a function from MagickCore/MagickWand that doesn't yet have a
 wrapper in wand.nim, `ptr MagickWand` can be accessed via the `impl`
@@ -62,5 +65,8 @@ proc main =
 
 MagickWandGenesis()
 main()
-MagickWandGenesis()
+MagickWandTerminus()
 ```
+
+If you don't want to use the Wand object, replace `newWand()` with
+`NewMagickWand()`, and remember to call `DestroyMagickWand(wand)`.
