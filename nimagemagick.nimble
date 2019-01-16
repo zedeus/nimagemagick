@@ -4,7 +4,7 @@ version       = "0.1.0"
 author        = "zedeus"
 description   = "ImageMagick (MagickCore and MagickWand) wrapper"
 license       = "LGPL-3.0"
-srcDir        = "nimagemagick"
+srcDir        = "src"
 
 # Dependencies
 

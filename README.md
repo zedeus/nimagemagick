@@ -20,7 +20,7 @@ nimble install https://github.com/zedeus/nimagemagick.git
 
 Example usage:
 ```nim
-import nimagemagick/wand
+import nimagemagick
 
 proc main =
   # create a new wand, and read the built-in logo image
@@ -52,7 +52,7 @@ field of any `Wand` object. Here's the example above without the
 convenience wrappers:
 
 ```nim
-import nimagemagick/wand
+import nimagemagick
 
 proc main =
   var wand = newWand()

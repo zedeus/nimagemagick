@@ -1,4 +1,4 @@
-import magickwand
+import nimagemagick/magickwand
 export magickwand
 
 type

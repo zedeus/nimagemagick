@@ -1,6 +1,6 @@
 import std/[lenientops, strutils]
 
-import nimagemagick/wand
+import nimagemagick
 
 proc main =
   var
