@@ -7,13 +7,12 @@ this point it's mostly a "thin" wrapper. With time more functions will be covere
 by the wrapper for a convenient interface. See the current progress in
 src/nimagemagick.nim.
 
-The wrapper was built using the [nimterop](https://github.com/genotrance/nimterop/)
-package, though [tree-sitter](https://github.com/tree-sitter/tree-sitter) and 
-nimterop still need a few fixes to be able to wrap MagickWand/MagickCore without
-a few edits. Till then, `magickwand.nim` contains the edited wrapper. If you
-want to generate the wrapper yourself, simply run the build script: `nim e build.nims`
+The wrapper gets automatically generated using the
+[nimterop](https://github.com/genotrance/nimterop/) package, which leverages the
+[tree-sitter](https://github.com/tree-sitter/tree-sitter) project.
 
 Requires ImageMagick **7.0** or later. Run `convert -version` to check.
+Probably only works on Linux.
 
 Contributions are welcome.
 

@@ -1,5 +1,20 @@
-import nimagemagick/magickwand
-export magickwand
+import std/strutils
+import nimterop/cimport
+
+include nimagemagick/missing
+
+const
+  libs = gorgeEx("MagickWand-config --libs").output
+  flags = gorgeEx("MagickWand-config --cflags").output
+  path = flags[2 .. ^1].split(" ")[0]
+  header = path & "/MagickWand/MagickWand.h"
+
+{.passL: libs.}
+{.passC: flags.}
+{.hint[ConvFromXtoItselfNotNeeded]: off.}
+
+cIncludeDir(path)
+cImport(header, recurse=true)
 
 type
   Wand* = object
@@ -35,20 +50,20 @@ proc cloneWand*(wand: Wand): Wand =
   result.impl = CloneMagickWand(wand.impl)
 
 proc readImage*(wand: Wand; image: string) =
-  if not MagickReadImage(wand.impl, image):
+  if MagickReadImage(wand.impl, image) == false:
     wandException(wand)
 
 proc newWand*(image: string): Wand =
   result = newWand()
-  if not MagickReadImage(result.impl, image):
+  if MagickReadImage(result.impl, image) == false:
     wandException(result)
 
 proc writeImage*(wand: Wand; image: string) =
-  if not MagickWriteImage(wand.impl, image):
+  if MagickWriteImage(wand.impl, image) == false:
     wandException(wand)
 
 proc displayImage*(wand: Wand; server="") =
-  if not MagickDisplayImage(wand.impl, server):
+  if MagickDisplayImage(wand.impl, server) == false:
     wandException(wand)
 
 proc appendImages*(wand: Wand; stack: bool): Wand =
@@ -66,10 +81,13 @@ proc setFirstIterator*(wand: Wand) =
 proc setLastIterator*(wand: Wand) =
   MagickSetLastIterator(wand.impl)
 
-proc liquidRescale*(wand: Wand; columns, rows: SomeNumber; deltaX=1.0; rigidity=1.0): bool {.discardable.} =
-  MagickLiquidRescaleImage(wand.impl, columns.uint, rows.uint, deltaX.cdouble, rigidity.cdouble)
+proc liquidRescale*(wand: Wand; columns, rows: SomeNumber;
+                    deltaX=1.0; rigidity=1.0): bool {.discardable.} =
+  MagickLiquidRescaleImage(wand.impl, columns.uint, rows.uint,
+                           deltaX.cdouble, rigidity.cdouble)
 
-proc resizeImage*(wand: Wand; columns, rows: SomeNumber; filter=LanczosFilter): bool {.discardable.} =
+proc resizeImage*(wand: Wand; columns, rows: SomeNumber;
+                  filter=LanczosFilter): bool {.discardable.} =
   MagickResizeImage(wand.impl, columns.uint, rows.uint, filter)
 
 proc width*(wand: Wand): int =
