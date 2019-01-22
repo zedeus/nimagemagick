@@ -1,8 +1,6 @@
 import std/strutils
 import nimterop/cimport
 
-include nimagemagick/missing
-
 const
   libs = gorgeEx("MagickWand-config --libs").output
   flags = gorgeEx("MagickWand-config --cflags").output
@@ -12,6 +10,8 @@ const
 {.passL: libs.}
 {.passC: flags.}
 {.hint[ConvFromXtoItselfNotNeeded]: off.}
+
+include nimagemagick/missing
 
 cIncludeDir(path)
 cImport(header, recurse=true)
@@ -34,7 +34,7 @@ proc wandException*(wand: Wand) =
     severity: ExceptionType
     description = MagickGetException(wand.impl, addr severity)
     error = $(severity.int) & ": " & $description
-  MagickRelinquishMemory(description)
+  discard MagickRelinquishMemory(description)
   raise newException(IOError, error)
 
 proc genesis* =
@@ -73,22 +73,22 @@ proc addImage*(wand, addWand: Wand): bool {.discardable.} =
   MagickAddImage(wand.impl, addWand.impl)
 
 proc setSize*(wand: Wand; width, height: SomeNumber): bool {.discardable.} =
-  MagickSetSize(wand.impl, width.uint, height.uint)
+  MagickSetSize(wand.impl, width.cuint, height.cuint)
 
 proc setFirstIterator*(wand: Wand) =
-  MagickSetFirstIterator(wand.impl)
+  discard MagickSetFirstIterator(wand.impl)
 
 proc setLastIterator*(wand: Wand) =
-  MagickSetLastIterator(wand.impl)
+  discard MagickSetLastIterator(wand.impl)
 
 proc liquidRescale*(wand: Wand; columns, rows: SomeNumber;
                     deltaX=1.0; rigidity=1.0): bool {.discardable.} =
-  MagickLiquidRescaleImage(wand.impl, columns.uint, rows.uint,
+  MagickLiquidRescaleImage(wand.impl, columns.cuint, rows.cuint,
                            deltaX.cdouble, rigidity.cdouble)
 
 proc resizeImage*(wand: Wand; columns, rows: SomeNumber;
                   filter=LanczosFilter): bool {.discardable.} =
-  MagickResizeImage(wand.impl, columns.uint, rows.uint, filter)
+  MagickResizeImage(wand.impl, columns.cuint, rows.cuint, filter)
 
 proc width*(wand: Wand): int =
   MagickGetImageWidth(wand.impl).int
