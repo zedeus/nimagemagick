@@ -1,18 +1,18 @@
 # nimagemagick
 
-nimagemagick is an [ImageMagick](https://www.imagemagick.org/) wrapper for Nim.
-It wraps the [MagickCore](https://imagemagick.org/script/magick-wand.php) and 
+nimagemagick is an [ImageMagick 7.0](https://www.imagemagick.org/) wrapper for Nim.
+It wraps the [MagickCore](https://imagemagick.org/script/magick-core.php) and 
 [MagickWand](https://imagemagick.org/script/magick-wand.php) APIs, though at 
 this point it's mostly a "thin" wrapper. With time more functions will be covered
 by the wrapper for a convenient interface. See the current progress in
-src/nimagemagick.nim.
+[src/nimagemagick.nim](https://github.com/zedeus/nimagemagick/blob/master/src/nimagemagick.nim)
 
-The wrapper gets automatically generated using the
+The wrapper gets automatically generated at compile time using the
 [nimterop](https://github.com/genotrance/nimterop/) package, which leverages the
 [tree-sitter](https://github.com/tree-sitter/tree-sitter) project.
 
 Requires ImageMagick **7.0** or later. Run `convert -version` to check.
-Probably only works on Linux.
+Only tested on Linux.
 
 Contributions are welcome.
 
