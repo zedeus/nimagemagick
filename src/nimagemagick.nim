@@ -11,10 +11,24 @@ const
 {.passC: flags.}
 {.hint[ConvFromXtoItselfNotNeeded]: off.}
 
-include nimagemagick/missing
+include ./nimagemagick/missing
+
+cPlugin:
+  import strutils
+
+  proc onSymbol*(sym: var Symbol) {.exportc, dynlib.} =
+    sym.name = sym.name.strip(chars={'_'})
+    sym.name = sym.name.replace("___", "_")
+    sym.name = sym.name.replace("__", "_")
 
 cIncludeDir(path)
 cImport(header, recurse=true)
+
+converter bToM*(b: bool): MagickBooleanType =
+  if b: MagickTrue else: MagickFalse
+
+converter mToB*(m: MagickBooleanType): bool =
+  m == MagickTrue
 
 type
   Wand* = object
@@ -22,12 +36,6 @@ type
 
 proc `=destroy`*(wand: var Wand) =
   wand.impl = DestroyMagickWand(wand.impl)
-
-converter bToM*(b: bool): MagickBooleanType =
-  if b: MagickTrue else: MagickFalse
-
-converter mToB*(m: MagickBooleanType): bool =
-  if m.int == 1: true else: false
 
 proc wandException*(wand: Wand) =
   var
@@ -50,20 +58,20 @@ proc cloneWand*(wand: Wand): Wand =
   result.impl = CloneMagickWand(wand.impl)
 
 proc readImage*(wand: Wand; image: string) =
-  if MagickReadImage(wand.impl, image) == false:
+  if not MagickReadImage(wand.impl, image):
     wandException(wand)
 
 proc newWand*(image: string): Wand =
   result = newWand()
-  if MagickReadImage(result.impl, image) == false:
+  if not MagickReadImage(result.impl, image):
     wandException(result)
 
 proc writeImage*(wand: Wand; image: string) =
-  if MagickWriteImage(wand.impl, image) == false:
+  if not MagickWriteImage(wand.impl, image):
     wandException(wand)
 
 proc displayImage*(wand: Wand; server="") =
-  if MagickDisplayImage(wand.impl, server) == false:
+  if not MagickDisplayImage(wand.impl, server):
     wandException(wand)
 
 proc appendImages*(wand: Wand; stack: bool): Wand =
@@ -76,10 +84,10 @@ proc setSize*(wand: Wand; width, height: SomeNumber): bool {.discardable.} =
   MagickSetSize(wand.impl, width.cuint, height.cuint)
 
 proc setFirstIterator*(wand: Wand) =
-  discard MagickSetFirstIterator(wand.impl)
+  MagickSetFirstIterator(wand.impl)
 
 proc setLastIterator*(wand: Wand) =
-  discard MagickSetLastIterator(wand.impl)
+  MagickSetLastIterator(wand.impl)
 
 proc liquidRescale*(wand: Wand; columns, rows: SomeNumber;
                     deltaX=1.0; rigidity=1.0): bool {.discardable.} =
