@@ -1,28 +1,49 @@
-import std/strutils
-import nimterop/cimport
+import std/[os, strutils]
+import nimterop/[build, cimport]
 
 const
-  libs = gorgeEx("MagickWand-config --libs").output
-  flags = gorgeEx("MagickWand-config --cflags").output
-  path = flags[2 .. ^1].split(" ")[0]
-  header = path & "/MagickWand/MagickWand.h"
+  baseDir = getProjectCacheDir("imagemagick")
 
-{.passL: libs.}
-{.passC: flags.}
-{.hint[ConvFromXtoItselfNotNeeded]: off.}
+# MagickWand header and lib
+getHeader(
+  header = "ImageMagick-6/wand/MagickWand.h",
+  jbburi = "ImageMagick",
+  outdir = baseDir,
+  altnames = "MagickWand-6.Q16"
+)
 
-include ./nimagemagick/missing
+# MagickCore header and lib
+getHeader(
+  header = "ImageMagick-6/magick/MagickCore.h",
+  jbburi = "ImageMagick",
+  outdir = baseDir,
+  altnames = "MagickCore-6.Q16"
+)
 
-cPlugin:
-  import strutils
+static:
+  cSkipSymbol(@["QuantumRange", "QuantumScale", "OpaqueOpacity"])
+  when isDefined(MagickWandJBB):
+    # Copy the right lib file
+    mvFile(MagickWandLPath, MagickWandLPath & ".6")
+    mvFile(MagickCoreLPath, MagickCoreLPath & ".6")
 
-  proc onSymbol*(sym: var Symbol) {.exportc, dynlib.} =
-    sym.name = sym.name.strip(chars={'_'})
-    sym.name = sym.name.replace("___", "_")
-    sym.name = sym.name.replace("__", "_")
+cIncludeDir(MagickWandPath.parentDir.parentDir)
 
-cIncludeDir(path)
-cImport(header, recurse=true)
+when isDefined(MagickWandStd):
+  # Linker flags from pkg-config
+  cPassL(linkLibs(@["MagickWand"], false))
+  cIncludeDir("/usr/include/x86_64-linux-gnu/ImageMagick-6")
+elif isDefined(MagickWandJBB):
+  cPassL(MagickWandLPath & ".6")
+  cPassL(MagickCoreLPath & ".6")
+  cPassL("-Wl,-rpath -Wl,.")
+cImport(MagickWandPath, recurse = true, flags = "-E__,_ -F__,_ -G___=_,__=_")
+
+const
+  # Define after cImport() since types after consts - nimterop#206
+  QuantumRange* = 65535.Quantum
+  QuantumScale* = (1.0 / QuantumRange.cfloat).Quantum
+  OpaqueOpacity* = 0.Quantum
 
 converter bToM*(b: bool): MagickBooleanType =
   if b: MagickTrue else: MagickFalse
@@ -96,7 +117,8 @@ proc liquidRescale*(wand: Wand; columns, rows: SomeNumber;
 
 proc resizeImage*(wand: Wand; columns, rows: SomeNumber;
                   filter=LanczosFilter): bool {.discardable.} =
-  MagickResizeImage(wand.impl, columns.cuint, rows.cuint, filter)
+  # Additional param
+  MagickResizeImage(wand.impl, columns.cuint, rows.cuint, filter, 0)
 
 proc width*(wand: Wand): int =
   MagickGetImageWidth(wand.impl).int
