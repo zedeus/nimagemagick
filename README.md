@@ -13,7 +13,8 @@ The wrapper gets automatically generated at compile time using the
 
 To use locally installed ImageMagick, provide `-d:MagickCoreStd -d:MagickWandStd`
 to Nim on the command line. To download precompiled binaries from BinaryBuilder.org,
-provide `-d:MagickCoreJBB -d:MagickWandJBB`.
+provide `-d:MagickCoreJBB -d:MagickWandJBB -d:MagickWandSetVer=X` where X is the
+major version of ImageMagick.
 
 Contributions are welcome.
 
