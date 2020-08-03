@@ -1,28 +1,79 @@
-import std/strutils
-import nimterop/cimport
+import std/[macros, os, strutils]
+import nimterop/[build, cimport]
 
 const
-  libs = gorgeEx("MagickWand-config --libs").output
-  flags = gorgeEx("MagickWand-config --cflags").output
-  path = flags[2 .. ^1].split(" ")[0]
-  header = path & "/MagickWand/MagickWand.h"
+  baseDir = getProjectCacheDir("imagemagick")
+  cflags =
+    when isDefined(MagickWandStd):
+      # Get CFLAGS using pkg-config when using std packages
+      gorge("pkg-config --cflags MagickWand")
+    else: ""
+  version =
+    when isDefined(MagickWandSetVer):
+      # Use version if specified - required for JBB
+      block:
+        const MagickWandSetVer {.strdefine.} = ""
+        setDefines(@["MagickCoreSetVer=" & MagickWandSetVer])
+        $MagickWandSetVer[0]
+    elif isDefined(MagickWandStd):
+      # For std packages, get major version from include paths
+      cflags.split("ImageMagick-")[1].split(" ")[0]
+    else: ""
 
-{.passL: libs.}
-{.passC: flags.}
-{.hint[ConvFromXtoItselfNotNeeded]: off.}
+static:
+  if version.len == 0:
+    raise newException(Defect, "-d:MagickWandSetVer needs to be defined")
 
-include ./nimagemagick/missing
+# MagickWand header and lib
+getHeader(
+  header = "ImageMagick-$1/wand/MagickWand.h" % version,
+  jbburi = "ImageMagick",
+  outdir = baseDir,
+  altnames = "MagickWand-$1.Q16,MagickWand-$1.Q8" % version
+)
 
-cPlugin:
-  import strutils
+# MagickCore header and lib
+getHeader(
+  header = "ImageMagick-$1/magick/MagickCore.h" % version,
+  jbburi = "ImageMagick",
+  outdir = baseDir,
+  altnames = "MagickCore-$1.Q16,MagickCore-$1.Q8" % version
+)
 
-  proc onSymbol*(sym: var Symbol) {.exportc, dynlib.} =
-    sym.name = sym.name.strip(chars={'_'})
-    sym.name = sym.name.replace("___", "_")
-    sym.name = sym.name.replace("__", "_")
+static:
+  cSkipSymbol(@["QuantumRange", "QuantumScale", "OpaqueOpacity"])
+  when isDefined(MagickWandJBB):
+    # Copy the right lib file
+    mvFile(MagickWandLPath, MagickWandLPath & "." & version)
+    mvFile(MagickCoreLPath, MagickCoreLPath & "." & version)
 
-cIncludeDir(path)
-cImport(header, recurse=true)
+# Convert CFLAGS into cPassC() and cIncludeDir() calls
+macro handleCflags(cflags: static[string]): untyped =
+  result = newNimNode(nnkStmtList)
+  for str in cflags.split(" "):
+    if str.startsWith("-I"):
+      result.add quote do:
+        cIncludeDir(`str`[2 .. ^1])
+    else:
+      result.add quote do:
+        cPassC(`str`)
+
+when isDefined(MagickWandStd):
+  # Linker flags from pkg-config
+  cPassL(linkLibs(@["MagickWand"], false))
+  handleCflags(cflags)
+elif isDefined(MagickWandJBB):
+  cIncludeDir(MagickWandPath.parentDir.parentDir)
+  cPassL(MagickWandLPath & "." & version)
+  cPassL(MagickCoreLPath & "." & version)
+  cPassL("-Wl,-rpath -Wl,.")
+cImport(MagickWandPath, recurse = true, flags = "-E__,_ -F__,_ -G___=_,__=_")
+
+const
+  # Define after cImport() since types after consts - nimterop#206
+  QuantumRange* = 65535.Quantum
+  QuantumScale* = (1.0 / QuantumRange.cfloat).Quantum
+  OpaqueOpacity* = 0.Quantum
 
 converter bToM*(b: bool): MagickBooleanType =
   if b: MagickTrue else: MagickFalse
@@ -96,7 +147,8 @@ proc liquidRescale*(wand: Wand; columns, rows: SomeNumber;
 
 proc resizeImage*(wand: Wand; columns, rows: SomeNumber;
                   filter=LanczosFilter): bool {.discardable.} =
-  MagickResizeImage(wand.impl, columns.cuint, rows.cuint, filter)
+  # Additional param
+  MagickResizeImage(wand.impl, columns.cuint, rows.cuint, filter, 0)
 
 proc width*(wand: Wand): int =
   MagickGetImageWidth(wand.impl).int

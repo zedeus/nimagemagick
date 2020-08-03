@@ -1,8 +1,8 @@
 # nimagemagick
 
 nimagemagick is an [ImageMagick 7.0](https://www.imagemagick.org/) wrapper for Nim.
-It wraps the [MagickCore](https://imagemagick.org/script/magick-core.php) and 
-[MagickWand](https://imagemagick.org/script/magick-wand.php) APIs, though at 
+It wraps the [MagickCore](https://imagemagick.org/script/magick-core.php) and
+[MagickWand](https://imagemagick.org/script/magick-wand.php) APIs, though at
 this point it's mostly a "thin" wrapper. With time more functions will be covered
 by the wrapper for a convenient interface. See the current progress in
 [src/nimagemagick.nim](https://github.com/zedeus/nimagemagick/blob/master/src/nimagemagick.nim)
@@ -11,8 +11,10 @@ The wrapper gets automatically generated at compile time using the
 [nimterop](https://github.com/genotrance/nimterop/) package, which leverages the
 [tree-sitter](https://github.com/tree-sitter/tree-sitter) project.
 
-Requires ImageMagick **7.0** or later. Run `convert -version` to check.
-Only tested on Linux.
+To use locally installed ImageMagick, provide `-d:MagickCoreStd -d:MagickWandStd`
+to Nim on the command line. To download precompiled binaries from BinaryBuilder.org,
+provide `-d:MagickCoreJBB -d:MagickWandJBB -d:MagickWandSetVer=X` where X is the
+major version of ImageMagick.
 
 Contributions are welcome.
 
@@ -51,7 +53,7 @@ See other examples in the examples folder.
 
 To use a function from MagickCore/MagickWand that doesn't yet have a
 wrapper in wand.nim, `ptr MagickWand` can be accessed via the `impl`
-field of any `Wand` object. Here's the example above without the 
+field of any `Wand` object. Here's the example above without the
 convenience wrappers:
 
 ```nim
